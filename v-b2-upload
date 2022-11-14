@@ -1,0 +1,25 @@
+#!/bin/bash
+
+backup_bucket_name=
+backup_path=/backup
+
+# avoid to use v-list-users due possible environment variables changes
+# using the same method used by v-list-users
+hestiacp_possible_accounts=$(cat /etc/passwd | egrep @ | cut -f1 -d:)
+
+for hestia_user in $hestiacp_possible_accounts
+do
+  if [ -f "/usr/local/hestia/data/users/$hestia_user/user.conf" ]
+  then
+    hestiacp_accounts="$hestia_user $hestiacp_accounts"
+  fi
+done
+  
+cd /backup
+
+for hestiacp_account in $hestiacp_accounts
+do
+  cp $hestiacp_account.*.tar $hestiacp_account.tar
+done
+
+/usr/bin/backblaze-backup.sh 3 backblaze yesRemoveAfterSent all $backup_bucket_name $backup_path
